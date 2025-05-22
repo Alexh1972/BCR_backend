@@ -90,9 +90,9 @@ def get_churn_prediction(request):
            'EstimatedSalary': salary / 5.0,
            'Gender_Female': (male == 0),
            'Gender_Male': (male == 1),
-           'Total_Products_More Than 2 Products': (products >= 1) & (products < 5),
-           'Total_Products_One product': products > 20,
-           'Total_Products_Two Products': (products >= 5) & (products < 20),
+           'Total_Products_More Than 2 Products': (products >= 1) & (products < 2),
+           'Total_Products_One product': products > 5,
+           'Total_Products_Two Products': (products >= 2) & (products < 5),
            'Account_Balance_More Than zero Balance': (balance != 0),
            'Account_Balance_Zero Balance': (balance == 0)}
     df = pd.DataFrame([row], columns=cols)
@@ -194,7 +194,7 @@ def clusters(request):
         BcrBackConfig.db_loaded = True
         df_path = "dataset.csv"
         try:
-            BcrBackConfig.database = pd.read_csv(df_path, nrows=50000)
+            BcrBackConfig.database = pd.read_csv(df_path, nrows=500000)
             print(f"Object successfully loaded from '{df_path}':")
         except FileNotFoundError:
             print(f"Error: The file '{df_path}' was not found. Please ensure the path and filename are correct.")

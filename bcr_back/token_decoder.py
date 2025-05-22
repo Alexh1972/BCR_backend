@@ -15,7 +15,6 @@ class JWTTokenDecoder():
     def getUserFromToken(self):
         if self.token is None or self.token == "":
             return None
-
         try:
             decodedPayload = jwt.decode(self.token, settings.SECRET_KEY, algorithms=['HS256'])
             user_id = decodedPayload.get("user_id")

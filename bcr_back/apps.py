@@ -9,6 +9,7 @@ class BcrBackConfig(AppConfig):
     dtree_model = None
     risk_model = None
     database = None
+    db_loaded = False
 
     def ready(self):
         if not BcrBackConfig.dtree_model:
@@ -35,14 +36,5 @@ class BcrBackConfig(AppConfig):
                 print(f"Object successfully loaded from '{model_path}':")
             except FileNotFoundError:
                 print(f"Error: The file '{model_path}' was not found. Please ensure the path and filename are correct.")
-            except Exception as e:
-                print(f"An error occurred during loading: {e}")
-        if not BcrBackConfig.database:
-            df_path = 'dataset.csv'
-            try:
-                BcrBackConfig.database = pd.read_csv(df_path)
-                print(f"Object successfully loaded from '{df_path}':")
-            except FileNotFoundError:
-                print(f"Error: The file '{df_path}' was not found. Please ensure the path and filename are correct.")
             except Exception as e:
                 print(f"An error occurred during loading: {e}")

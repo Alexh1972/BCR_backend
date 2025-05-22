@@ -1,5 +1,3 @@
-from rest_framework.decorators import api_view
-
 from .models import CustomerData
 from django.shortcuts import HttpResponse
 import json
@@ -7,11 +5,24 @@ from bcr_back.apps import BcrBackConfig
 from .serializers import CustomerDataSerializer
 import numpy as np
 import pandas as pd
+from django.contrib.auth.models import User
+
+from .token_decoder import JWTTokenDecoder
 
 
 def get_users(request):
+    jwt_token_decoder = JWTTokenDecoder(request)
+    user = jwt_token_decoder.getUserFromToken()
+
+    if user is None:
+        return HttpResponse(status=401)
+
     body = request.body
-    customer_ids = json.loads(body)["IDS"]
+    customer_ids = json.loads(body).get("IDS")
+
+    if not customer_ids or not isinstance(customer_ids, list):
+        return HttpResponse(status=400, content=json.dumps({'error': "Field 'IDS' not found!"}))
+
     customers = CustomerData.objects.filter(customer_id__in=customer_ids)
 
     serializer = CustomerDataSerializer(customers, many=True)
@@ -20,8 +31,21 @@ def get_users(request):
 
 
 def get_churn_prediction(request):
+    jwt_token_decoder = JWTTokenDecoder(request)
+    user = jwt_token_decoder.getUserFromToken()
+
+    if user is None:
+        return HttpResponse(status=401)
+
     body = request.body
     body = json.loads(body)
+
+    required_fields = ["credit_score", "age", "tenure", "credit_card", "is_active", "salary", "male", "products",
+                       "balance"]
+    for field in required_fields:
+        if field not in body:
+            return HttpResponse(status=401, content=json.dumps({'error': f"Field '{field}' not found!"}))
+
     credit_score = body["credit_score"]
     age = body["age"]
     tenure = body["tenure"]
@@ -69,8 +93,20 @@ def get_churn_prediction(request):
 
 
 def get_risk_prediction(request):
+    jwt_token_decoder = JWTTokenDecoder(request)
+    user = jwt_token_decoder.getUserFromToken()
+
+    if user is None:
+        return HttpResponse(status=401)
+
     body = request.body
     body = json.loads(body)
+
+    required_fields = ["age", "job", "credit_amount", "male", "savings", "check"]
+    for field in required_fields:
+        if field not in body:
+            return HttpResponse(status=401, content=json.dumps({'error': f"Field '{field}' not found!"}))
+
     age = body["age"]
     job = body["job"]
     credit_amount = body["credit_amount"]
@@ -113,3 +149,13 @@ def get_risk_prediction(request):
     pred = BcrBackConfig.risk_model.predict(df.values)
 
     return HttpResponse(json.dumps({'credit_risk': int(pred[0])}))
+
+def signup(request):
+    username = request.POST.get('username')
+    password = request.POST.get('password')
+
+    if User.objects.get(username=username):
+        return HttpResponse(json.dumps({'error': 'Username already taken!'}))
+
+    User.objects.create_user(username=username, password=password)
+    return HttpResponse(json.dumps({'success': 'User created'}))
